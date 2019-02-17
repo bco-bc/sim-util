@@ -9,7 +9,7 @@ INCLUDE = box.hpp cvector.hpp entity-range.hpp id.hpp math-constants.hpp singlet
 
 SRC = file-store.cpp  util.cpp
 
-TESTS = test-vertex.cpp test-surface.cpp test-dotted-surface-generation.cpp test-pdb-reader.cpp
+TESTS = 
 
 APPS =
 

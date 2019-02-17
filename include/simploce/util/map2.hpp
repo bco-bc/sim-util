@@ -41,14 +41,16 @@ namespace simploce {
      * key2. 
      * @param key1 First key.
      * @param key2 Second key.
-     * @return Actual value or V{} if nonexistent.
+     * @return Value.
+     * @throws std::out_of_range if nonexistent.
      */
     V at(K key1, K key2) const;
 
     /**
      * Returns value.
      * @param keys Two key values.
-     * @return Actual value or V{} if nonexistent.
+     * @return Value.
+     * @throws std::out_of_range if nonexistent.
      */
     V get(const std::pair<K,K>& keys) const;
 
@@ -78,27 +80,27 @@ namespace simploce {
 
   private:
 
-    using map_t = std::map<K,V>;
+    using map_t = std::map<K,V>;    
     using map_map_t = std::map<K, map_t>;
 
-    map_map_t map2_;
+    map_map_t cont_;  // "V=cont_(K1, K2)" corresponds to std::map<K1<std::map<K2,V>
   };
 
   template <typename K, typename V>
-  MatrixMap<K,V>::MatrixMap() : map2_{}
+  MatrixMap<K,V>::MatrixMap() : cont_{}
   {
   }
 
   template <typename K, typename V>
   void MatrixMap<K,V>::add(K key1, K key2, V value)
   {
-    auto iter = map2_.find(key1);
-    if ( iter == map2_.end() ) {
+    auto iter = cont_.find(key1);
+    if ( iter == cont_.end() ) {
       map_t rmap{};
       auto rpair = std::make_pair(key2, value);
       rmap.insert(rpair);
       auto cpair = std::make_pair(key1, rmap);
-      map2_.insert(cpair);    
+      cont_.insert(cpair);    
     } else {
       auto rpair = std::make_pair(key2, value);
       iter->second.insert(rpair);
@@ -108,9 +110,9 @@ namespace simploce {
   template <typename K, typename V>
   void MatrixMap<K,V>::remove(K key1, K key2)
   {
-    auto iter1 = map2_.find(key1);
-    if ( iter1 != map2_.end() ) {
-      map_t& rmap = iter1->second;
+    auto iter = cont_.find(key1);
+    if ( iter != cont_.end() ) {
+      map_t& rmap = iter->second;
       rmap.erase(key2);
     }
   }
@@ -118,13 +120,16 @@ namespace simploce {
   template <typename K, typename V>
   V MatrixMap<K,V>::at(K key1, K key2) const
   {
-    auto iter1 = map2_.find(key1);
-    if ( iter1 == map2_.end() ) {
+    auto iter1 = cont_.find(key1);
+    if ( iter1 == cont_.end() ) {
       throw std::out_of_range("No element associated with keys.");
     } else {
       const map_t& rmap = iter1->second;
       const auto& iter2 = rmap.find(key2);
-      return (iter2 == rmap.end() ? V() : iter2->second);
+      if ( iter2 == rmap.end() ) {
+	throw std::out_of_range("No element associated with keys.");
+      }
+      return iter2->second;
     }
   }
 
@@ -138,7 +143,7 @@ namespace simploce {
   std::vector<std::pair<K, K>> MatrixMap<K,V>::keyPairs() const
   {
     std::vector<std::pair<K, K>> pairs;
-    for (auto iter1 = map2_.begin(); iter1 != map2_.end(); ++iter1) {
+    for (auto iter1 = cont_.begin(); iter1 != cont_.end(); ++iter1) {
       K key1 = iter1->first;
       const map_t& rmap = iter1->second;
       for (auto iter2 = rmap.begin(); iter2 != rmap.end(); ++iter2) {
@@ -153,8 +158,8 @@ namespace simploce {
   template <typename K, typename V>
   bool MatrixMap<K,V>::contains(K key1, K key2) const
   {
-    auto iter1 = map2_.find(key1);
-    if ( iter1 == map2_.end() ) {
+    auto iter1 = cont_.find(key1);
+    if ( iter1 == cont_.end() ) {
       return false;
     } else {
       const map_t& rmap = iter1->second;
@@ -166,13 +171,13 @@ namespace simploce {
   template <typename K, typename V>
   inline void MatrixMap<K,V>::clear()
   {
-    map2_.clear();
+    cont_.clear();
   }
 
   template <typename K, typename V>
   inline bool MatrixMap<K,V>::empty() const
   {
-    return map2_.empty();
+    return cont_.empty();
   }
 
   /**
