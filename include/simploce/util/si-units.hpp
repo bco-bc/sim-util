@@ -19,7 +19,7 @@ namespace simploce {
     static const V E;
     
     /**
-     * Electric constant. In F/m = C/(V m).
+     * Electric constant or vacuum permittivity or permittivity of free space. In F/m = C/(V m).
      */
     static const V E0;
     

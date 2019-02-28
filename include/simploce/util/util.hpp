@@ -60,6 +60,16 @@ namespace simploce {
   {
     return ( b >= T{0} ? std::fabs(a) : -std::fabs(a) );
   }
+
+  /**
+   * Do given numbers have the same sign? T is any type that supports the default constructor T{0} 
+   * and the < operator.
+   */
+  template <typename T>
+  bool sameSign(T a, T b)
+  {
+    return sgn(a) == sgn(b);
+  }
   
   /**
    * Very -simple- random number generator.

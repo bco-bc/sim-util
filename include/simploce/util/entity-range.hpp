@@ -1,7 +1,6 @@
 #ifndef ENTITY_RANGE_HPP
 #define ENTITY_RANGE_HPP
 
-#include "../types.hpp"
 #include <vector>
 #include <utility>
 #include <thread>
@@ -67,8 +66,8 @@ namespace simploce {
   }
 
   /**
-   * Creates ranges for an entity collection of type T. This is based on the number of threads 
-   * available in a core.
+   * Creates ranges for an entity collection of type T. This is based on the number of 
+   * available threads 
    * @param entities Entities.
    * @return Ranges.
    */
