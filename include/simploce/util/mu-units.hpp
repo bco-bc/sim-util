@@ -77,6 +77,11 @@ namespace simploce {
      * Ångström to nm conversion factor.
      */
     static const V Angstrom_to_nm;
+
+    /**
+     * V to kJ/(mol e).
+     */
+    static const V V_to_kJ_mol_e;
   };
   
   template <typename V>
@@ -113,6 +118,9 @@ namespace simploce {
 
   template <typename V>
   const V MUUnits<V>::Angstrom_to_nm = 0.1;
+
+  template <typename V>
+  const V MUUnits<V>::V_to_kJ_mol_e = SIUnits<V>::NA * SIUnits<V>::E/1.0e+03;
 }
 
   

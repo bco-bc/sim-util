@@ -1,10 +1,17 @@
 #ifndef LU_HPP
 #define LU_HPP
 
+#include <iostream>
 #include <stdexcept>
 #include <cmath>
+#include <limits>
 
 namespace simploce {
+
+  /**
+   * See Press et al, "Numerical recipes in C++. The art of scientific computing", 2ed, 
+   * Cambridge University Press, Cambridge, 2002.
+   */
 
   /**
    * Performs LU-decomposition.
@@ -12,48 +19,59 @@ namespace simploce {
    * column index.
    * @param ndim - Dimension of a. 
    * @param indx - Upon return, holds pivot information.
+   * @returns -1 or +1, depending on whether the number of rows interchanges was even or odd, 
+   * respectively.
    */
   template <typename T, template <typename...> class MATRIX, template <typename...> class VECTOR>
-  void luDecomposition(MATRIX<T> &a, std::size_t ndim, VECTOR<std::size_t> &indx)
+  std::size_t luDecomposition(MATRIX<T> &a, std::size_t ndim, VECTOR<std::size_t> &indx)
   {
-    const static T SMALL = 1.0e-07;
+    std::size_t n = ndim/100.0 * 10.0;  // 10%
+    const static T SMALL = std::numeric_limits<T>::epsilon();
 
-    VECTOR<T> vv(ndim), p{};
+    VECTOR<T> vv(ndim);
     indx = VECTOR<std::size_t>(ndim);
-    T aamax{0.0}, sum{0.0};
-    std::size_t imax{0};
+    T d{1.0};
     
     // Find scale factor for each equation.
-    for (std::size_t i = 0; i < ndim; ++i) {
-      aamax = 0.0;
-      for (std::size_t j = 0; j < ndim; j++) {
-	aamax = (std::fabs(a(i,j)) > aamax) ?  std::fabs(a(i,j)) : aamax;
+    for (std::size_t i = 0; i != ndim; ++i) {
+      T aamax = 0.0;
+      for (std::size_t j = 0; j != ndim; ++j) {
+	T dum = std::fabs(a(i,j));
+	aamax = ( dum > aamax ? dum : aamax );
       }
       if (aamax <= SMALL) {
 	throw std::domain_error("Matrix LU-decomposition: Singular matrix.");
       }
       vv[i] = 1.0 / aamax;
     }
+    
     // Loop over COLUMNS starts.
-    for (std::size_t j = 0; j < ndim; j++) {
+    for (std::size_t j = 0; j != ndim; ++j) {
+
+      if ( j % n == 0) {
+	double real_j = j;
+	double real_ndim = ndim;
+	std::clog << real_j/real_ndim * 100.0 << "% LU completed." << std::endl;
+      }
       
       // Compute betas above diagonal.
-      for (std::size_t i = 0; i < j; ++i) {
-	sum = a(i,j);
-	for (std::size_t k = 0; k < i; ++k) {
+      for (std::size_t i = 0; i != j; ++i) {
+	T sum = a(i,j);
+	for (std::size_t k = 0; k != i; ++k) {
 	  sum -= a(i,k) * a(k,j);
 	}
 	a(i,j) = sum;
       }
       
       // Start search for pivot.
-      aamax = 0.0;
-      for (std::size_t i = j; i < ndim; i++) {	
+      T aamax = 0.0;
+      std::size_t imax = 0;
+      for (std::size_t i = j; i != ndim; ++i) {	
 	// Now compute diagonal betas and alpha below diagonal.
 	// The diagonal betas can be got this way because no pivoting
 	// is done until the largest element is found.
-	sum = a(i,j);
-	for (std::size_t k = 0; k < j; k++) {
+	T sum = a(i,j);
+	for (std::size_t k = 0; k != j; ++k) {
 	  sum -= a(i,k) * a(k,j);
 	}
 	a(i,j) = sum;
@@ -65,33 +83,29 @@ namespace simploce {
       }
       
       if (j != imax) {
-	// Swap rows
-	for (std::size_t k=0; k != ndim; ++k) {
-	  p[k] = a(imax, k);
-	}
-	//p = a(imax);
-	for (std::size_t k=0; k != ndim; ++k) {
+	// Interchange rows.
+	for (std::size_t k = 0; k != ndim; ++k) {
+	  T dum = a(imax, k);
 	  a(imax, k) = a(j, k);
+	  a(j, k) = dum;
 	}
-	//a(imax) = a(j);
-	for (std::size_t k=0; k != ndim; ++k) {
-	  a(j, k) = p[k];
-	}
-	//a(j) = p;
-	vv[imax] = vv[j];    // Swap scale factors too.
+	vv(imax) = vv(j);    // Swap scale factors too.
+	d = -d;              // Change parity.	
       }
       
       // Save permutation of the rows.
       indx[j] = imax;
-      a(j,j) = a(j,j) <= 0.0 ? SMALL : a(j,j);
+      a(j,j) = ( std::fabs(a(j,j)) <= SMALL ? SMALL : a(j,j) );
       if (j != ndim - 1) {
 	// Divide sub-diagonal alphas by pivot element.
 	T dum = 1.0 / a(j,j);
-	for (std::size_t i = j + 1; i < ndim; ++i) {
+	for (std::size_t i = j + 1; i != ndim; ++i) {
 	  a(i,j) *= dum;
 	}
       }
     }
+
+    return d;
   }
 
 
@@ -101,48 +115,47 @@ namespace simploce {
    * @param a - LU-decomposed matrix.
    * @param ndim - dimension of matrix a.
    * @param indx - Pivot information (delivered by `luDecomposition').
-   * @param b - The right hand side of the matrix equation Ax=b.
-   * @param x - Solution of Ax=b.
+   * @param b - The right hand side of the matrix equation Ax=b. Upon return, this holds 
+   * the solution x.
    */
   template <typename T, template <typename...> class MATRIX, template <typename...> class VECTOR>
   void backSubstitution(const MATRIX<T>& a,
 			std::size_t ndim,
 			const VECTOR<std::size_t>& indx,
-			const VECTOR<T> &b,
-			VECTOR<T> &x)
+			VECTOR<T> &b)
   {
-    // Make copy.
-    x = VECTOR<T>{b};
+    const static T SMALL = std::numeric_limits<T>::epsilon();
+    std::size_t ii{0};
     
     // Permute the equations.
-    for (std::size_t i=0; i<ndim; ++i) {
+    for (std::size_t i = 0; i != ndim; ++i) {
       std::size_t l = indx[i];
-      T sum = x[l];
-      x[l] = x[i];
-      x[i]  = sum;
+      T sum = b[l];
+      b[l] = b[i];
+      if ( ii != 0 ) {
+	for (std::size_t j = ii - 1; j != i; ++j)
+	  sum -= a(i, j) * b(j);
+      } else {
+	if (std::fabs(sum) > SMALL ) {
+	  ii = i + 1;
+	}
+      }
+      b[i]  = sum;
     }
     
-    for (std::size_t i=0; i<ndim; ++i) {
-      T sum = x[i];
-      for (std::size_t j=0; j<i; ++j) {
-	sum -= a(i,j) * x[j];
+    // Backward substitution. Keep 'int' type!
+    for (int i = ndim - 1; i >= 0; --i) {
+      T sum = b(i);  
+      for (int j = i + 1; j != int(ndim); ++j) {
+	sum -= a(i, j) * b(j);
       }
-      x[i] = sum;
-    }
-    
-    // Forward substitution ends, y[*] determined.        
-    for (std::size_t i=ndim-1; i>0; --i) {
-      T sum = x[i];  
-      for (std::size_t j=i+1; j<ndim; --j) {
-	sum -= a(i,j) * x[j];
-      }
-      x[i] = sum/a(i,i);
+      b[i] = sum / a(i, i);
     }
   }
 
   /**
    * Matrix inversion using LU-decoposed matrix.
-   * @param a - LU decomposed matrix.
+   * @param a - LU decomposed matrix. Upon return, this holds the inverse.
    * @param ndim - Dimension of a.
    * @param indx - Pivot information (delivered by `luDecomposition').
    * 
@@ -153,16 +166,17 @@ namespace simploce {
     VECTOR<T> col(ndim);
     MATRIX<T> inv_a(ndim, ndim);
     
-    for (std::size_t j=0; j<ndim; ++j) {
-      for (std::size_t i=0; i<ndim; ++i)
+    for (std::size_t j = 0; j != ndim; ++j) {
+      for (std::size_t i=0; i != ndim; ++i) {
 	col[i] = 0.0;
+      }
       col[j] = 1.0;
-      backSubstitution(a, ndim, indx, col);
-      for (std::size_t i=0; i<ndim; ++i)
+      backSubstitution<T, MATRIX, VECTOR>(a, ndim, indx, col);
+      for (std::size_t i = 0; i != ndim; ++i)
 	inv_a(i,j) = col[i];
     }
-    for (std::size_t i=0; i<ndim; ++i) {
-      for (std::size_t j=0; j<ndim; j++) {
+    for (std::size_t i = 0; i != ndim; ++i) {
+      for (std::size_t j = 0; j != ndim; ++j) {
 	a(i,j) = inv_a(i,j);
       }
     }
@@ -183,51 +197,8 @@ namespace simploce {
     luDecomposition(a, ndim, indx);
     
     // Calculate inverse.
-    inverseNoLU(a, indx, ndim);
+    inverseNoLU(a, ndim, indx);
   }
-
-/*
-
-template <class TYPE>
-BOOLEAN Inverse(MATRIX<TYPE> &a, int ndim, int recoverLU)
-{
-    int i, j;
-    VECTOR<int> indx(ndim);
-    MATH_VECTOR<double> col(ndim);
-    MATRIX<TYPE> inv_a(ndim, ndim);
-    BOOLEAN error_status;
-
-    if (recoverLU)
-
-// Recover LU-decomposition.
-         a.ReadElements("LU.matrix", ndim, ndim);     // Read backup.
-
-    else {
-         error_status=LuDcmp(a, ndim, indx);
-         a.WriteElements("LU.matrix", ndim, ndim);     // Write backup.
-    }
-
-// Calculate inverse.
-    if (!error_status) {
-         cout << "Inverse matrix: LU-decomposition succesfull\n";
-         cout.flush();
-         for (j=0; j<ndim; j++) {
-              for (i=0; i<ndim; i++)
-                   col[i]=0.0;
-              col[j]=1.0;
-              BkSub(a, ndim, indx, col);
-              for (i=0; i<ndim; i++)
-                   inv_a(i,j)=col[i];
-         }
-         for (i=0; i<ndim; i++)
-              for (j=0; j<ndim; j++)
-                   a(i,j)=inv_a(i,j);
-    }
-
-    return error_status;
-}
-
-*/
 
 }
 
