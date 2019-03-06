@@ -1,10 +1,12 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
+/**
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/lexical_cast.hpp>
+*/
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -97,8 +99,8 @@ namespace simploce {
    * @param val Val.
    * @return Nearest integer.
    */
-  template <typename V, typename I = int>
-  I nint(V val)
+  template <typename V>
+  int nint(V val)
   {
     std::fesetround(FE_TONEAREST);
     return std::nearbyint(val);
@@ -137,7 +139,7 @@ namespace simploce {
    * @param data Data
    * @return Compressed as string.
    * @see https://stackoverflow.com/questions/27529570/simple-zlib-c-string-compression-and-decompression
-   */
+   
   template <typename T>
   std::string compress(const T& data)
   {
@@ -154,22 +156,15 @@ namespace simploce {
     out.push(original);
     boost::iostreams::copy(out, compressed);
 
-    /**need to encode here *
-    std::string compressed_encoded = 
-         base64_encode(reinterpret_cast<const unsigned char*>(compressed.c_str()), 
-                                                              compressed.length());
-    
-    return compressed_encoded.str();
-    */
     return compressed.str();
   }
 
-  /**
+  
    * Decompresses a compressed data.
    * @param compressed Compressed data.
    * @return Original data.
    * @see https://stackoverflow.com/questions/27529570/simple-zlib-c-string-compression-and-decompression
-   */
+   
   template <typename T>
   T decompress(const std::string& compressed)
   {
@@ -185,14 +180,11 @@ namespace simploce {
     std::stringstream decompressed;
     original << compressed;
 
-    /** first decode  then decompress **/
-    //std::string compressed = base64_decode(compressed_encoded);
-
     in.push(original);
     boost::iostreams::copy(in, decompressed);
     return boost::lexical_cast<T,std::string>(decompressed.str());
  }
-
+  */
 }
 
 #endif
