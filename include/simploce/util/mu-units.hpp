@@ -47,6 +47,16 @@ namespace simploce {
      * Boltzmann constant. In kJ/(mol K).
      */
     static const V KB;
+
+    /**
+     * Molar gas constant. In kJ/(mol K).
+     */
+    static const V R;
+
+    /**
+     * Faraday constant. In e/mol.
+     */    
+    static const V F;
     
     /**
      * Value of kT at room temperature. In kJ/mol.
@@ -99,6 +109,12 @@ namespace simploce {
   
   template <typename V>
   const V MUUnits<V>::KB = SIUnits<V>::KB * SIUnits<V>::NA / 1.0e+03;
+
+  template <typename V>
+  const V MUUnits<V>::R = SIUnits<V>::R / 1.0e+03;
+
+  template <typename V>
+  const V MUUnits<V>::F = MUUnits<V>::E * SIUnits<V>::NA;
   
   template <typename V>
   const V MUUnits<V>::kT = MUUnits<V>::KB * SIUnits<V>::roomT;

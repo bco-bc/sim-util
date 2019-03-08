@@ -37,6 +37,16 @@ namespace simploce {
      * Boltzmann constant. In J/K.
      */
     static const V KB;
+
+    /**
+     * Molar gas constant. In J/(mol K).
+     */
+    static const V R;
+
+    /**
+     * Faraday constant. In C/mol.
+     */
+    static const V F;
     
     /**
      * Room temperature (25 degrees Celsius, 298.15 K), in K.
@@ -116,10 +126,16 @@ namespace simploce {
   
   template <typename V>
   const V SIUnits<V>::KB = 1.38064852e-23;
-  
+
   template <typename V>
   const V SIUnits<V>::NA = 6.022140857e+23;
 
+  template <typename V>
+  const V SIUnits<V>::R = SIUnits<V>::KB * SIUnits<V>::NA;
+
+  template <typename V>
+  const V SIUnits<V>::F = SIUnits<V>::E * SIUnits<V>::NA;
+  
   // see https://physics.nist.gov/cuu/Units/outside.html
   template <typename V>
   const V SIUnits<V>::MU = 1.66054e-27;
