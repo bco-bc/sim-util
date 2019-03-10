@@ -29,12 +29,12 @@ namespace simploce {
     static const V E;      
     
     /**
-     * Electric constant. In (kJ nm)/(mol e^2).
+     * Electric constant. In (mol e^2)/(kJ nm)
      */
     static const V E0;
     
     /**
-     * 4 * PI * E0. In (mol e^2) / kJ nm).
+     * 4 * PI * E0. In (kJ nm) / (mol e2).
      */
     static const V FOUR_PI_E0;
     
@@ -114,7 +114,7 @@ namespace simploce {
   const V MUUnits<V>::R = SIUnits<V>::R / 1.0e+03;
 
   template <typename V>
-  const V MUUnits<V>::F = MUUnits<V>::E * SIUnits<V>::NA;
+  const V MUUnits<V>::F = SIUnits<V>::F / SIUnits<V>::E;
   
   template <typename V>
   const V MUUnits<V>::kT = MUUnits<V>::KB * SIUnits<V>::roomT;
