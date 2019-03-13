@@ -8,9 +8,9 @@ namespace simploce {
     Store{}, forOutput_{forOutput}
     {
       if (forOutput_) {
-	openOutputFile(ostream_, fileName);
+	util::openOutputFile(ostream_, fileName);
       } else {
-	openInputFile(istream_, fileName);
+	util::openInputFile(istream_, fileName);
       }
     }
   

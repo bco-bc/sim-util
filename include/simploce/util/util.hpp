@@ -21,125 +21,131 @@
 #include <cfenv>
 
 namespace simploce {
-
-  /**
-   * Open input file.
-   * @param stream Input stream.
-   * @param fileName Input file name.
-   * @return Input stream.
-   */
-  std::ifstream& openInputFile(std::ifstream& stream, const std::string& fileName);
-  
-  /**
-   * Open input file.
-   * @param stream Output stream.
-   * @param fileName Output file name.
-   * @return Output stream.
-   */
-  std::ofstream& openOutputFile(std::ofstream& stream, const std::string& fileName);
-  
-  /**
-   * Signum.
-   * T is any type that supports the default constructor T{0} and the < operator.
-   * @param val Some value of type T.
-   * @return -1 (negative number), 1 (positive number), or 0 (zero).
-   * @see <a href="http://en.wikipedia.org/wiki/Sign_function">Sign function</a>
-   */
-  template <typename T> 
-  int sgn(T val)
-  {
-    return (T{0} < val) - (val < T{0});
-  }
-  
-  /**
-   * Sign copying function. The type T of the return value is that of a and b.
-   * It must support the T{0} constructor and the >= operator.
-   * If b >= 0 then the result is abs(a), else it is -abs(a). 
-   * @return Value of a with the sign of b. 
-   */
-  template <typename T>
-  T signCopy(T a, T b)
-  {
-    return ( b >= T{0} ? std::fabs(a) : -std::fabs(a) );
-  }
-
-  /**
-   * Do given numbers have the same sign? T is any type that supports the default constructor T{0} 
-   * and the < operator.
-   */
-  template <typename T>
-  bool sameSign(T a, T b)
-  {
-    return sgn(a) == sgn(b);
-  }
-  
-  /**
-   * Very -simple- random number generator.
-   * V is the value type of real numbers.
-   * @return Random value in the range [0,1].
-   */
-  template <typename V>
-  V random()
-  {
-    static bool init = false;
-    if ( !init ) {
+  namespace util {
+    
+    /**
+     * Open input file.
+     * @param stream Input stream.
+     * @param fileName Input file name.
+     * @return Input stream.
+     */
+    std::ifstream& openInputFile(std::ifstream& stream, const std::string& fileName);
+    
+    /**
+     * Open input file.
+     * @param stream Output stream.
+     * @param fileName Output file name.
+     * @return Output stream.
+     */
+    std::ofstream& openOutputFile(std::ofstream& stream, const std::string& fileName);
+    
+    /**
+     * Signum.
+     * T is any type that supports the default constructor T{0} and the < operator.
+     * @param val Some value of type T.
+     * @return -1 (negative number), 1 (positive number), or 0 (zero).
+     * @see <a href="http://en.wikipedia.org/wiki/Sign_function">Sign function</a>
+     */
+    template <typename T> 
+    int sgn(T val)
+    {
+      return (T{0} < val) - (val < T{0});
+    }
+    
+    /**
+     * Sign copying function. The type T of the return value is that of a and b.
+     * It must support the T{0} constructor and the >= operator.
+     * If b >= 0 then the result is abs(a), else it is -abs(a). 
+     * @return Value of a with the sign of b. 
+     */
+    template <typename T>
+    T signCopy(T a, T b)
+    {
+      return ( b >= T{0} ? std::fabs(a) : -std::fabs(a) );
+    }
+    
+    /**
+     * Do given numbers have the same sign? T is any type that supports the default constructor T{0} 
+     * and the < operator.
+     */
+    template <typename T>
+    bool sameSign(T a, T b)
+    {
+      return sgn(a) == sgn(b);
+    }
+    
+    /**
+     * Very -simple- random number generator.
+     * V is the value type of real numbers.
+     * @return Random value in the range [0,1].
+     */
+    template <typename V>
+    V random()
+    {
+      static bool init = false;
+      if ( !init ) {
+	std::time_t timer;
+	V seed = time(&timer);
+	srand(seed);
+	init = true;
+      }
+      int n = std::rand();
+      V v = V(n) / RAND_MAX;
+      return v;
+    }
+    
+    /**
+     * Returns nearest integer.
+     * V is the value type.
+     * @param val Val.
+     * @return Nearest integer.
+     */
+    template <typename V>
+    int nint(V val)
+    {
+      std::fesetround(FE_TONEAREST);
+      return std::nearbyint(val);
+    }
+    
+    /**
+     * Returns seed value.
+     * @return Seed value.
+     */
+    template <typename V>
+    V seed()
+    {
       std::time_t timer;
       V seed = time(&timer);
       srand(seed);
-      init = true;
+      seed += std::rand(); 
+      return seed;
     }
-    int n = std::rand();
-    V v = V(n) / RAND_MAX;
-    return v;
-  }
 
-  /**
-   * Returns nearest integer.
-   * V is the value type.
-   * @param val Val.
-   * @return Nearest integer.
-   */
-  template <typename V>
-  int nint(V val)
-  {
-    std::fesetround(FE_TONEAREST);
-    return std::nearbyint(val);
-  }
-  
-  /**
-   * Returns seed value.
-   * @return Seed value.
-   */
-  template <typename V>
-  V seed()
-  {
-    std::time_t timer;
-    V seed = time(&timer);
-    srand(seed);
-    seed += std::rand(); 
-    return seed;
-  }
-  
-  /**
-   * Waits for all future results before returning. T is result type stored in the future.
-   * @param futures Futures.
-   * @return Results of futures.
-   */
-  template<typename T>
-  std::vector<T> wait_for_all(std::vector<std::future<T> >& futures)
-  {
-    std::vector<T> results;
-    for (auto& f : futures)
-      results.push_back(f.get());
-    return results;
-  }    
-
-  /**
-   * Compresses data.
-   * @param data Data
-   * @return Compressed as string.
-   * @see https://stackoverflow.com/questions/27529570/simple-zlib-c-string-compression-and-decompression
-   
+    /**
+     * Does the given string represent a nonnegative integer.
+     */
+    bool isNonNegativeInteger(const std::string& s);
+    
+    /**
+     * Waits for all future results before returning. T is result type stored in the future.
+     * @param futures Futures.
+     * @return Results of futures.
+     */
+    template<typename T>
+    std::vector<T> wait_for_all(std::vector<std::future<T> >& futures)
+    {
+      std::vector<T> results;
+      for (auto& f : futures)
+	results.push_back(f.get());
+      return results;
+    }    
+    
+    /**
+     * Compresses data.
+     * @param data Data
+     * @return Compressed as string.
+     * @see https://stackoverflow.com/questions/27529570/simple-zlib-c-string-compression-and-decompression
+     
   template <typename T>
   std::string compress(const T& data)
   {
@@ -185,6 +191,8 @@ namespace simploce {
     return boost::lexical_cast<T,std::string>(decompressed.str());
  }
   */
+
+  }
 }
 
 #endif
